@@ -1,0 +1,29 @@
+# Android
+*.apk
+*.aab
+local.properties
+app/build/
+app/app/build/
+.gradle/
+
+# Native
+*.so
+*.o
+
+# Corpus work (reproducible; too big for git)
+corpus/*.bz2
+corpus/*.xml
+corpus/text/
+corpus/packs/
+packs/
+
+# Models (downloaded, never committed)
+models/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
