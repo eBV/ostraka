@@ -1,0 +1,108 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+android {
+    namespace = "dev.ostraka.app"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "dev.ostraka.app"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "0.1.0"
+
+        ndk {
+            // arm64-v8a: every phone sold in recent years.
+            // x86_64: emulator CI only, never shipped to users.
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += listOf("-std=c++17")
+                // llama.cpp CPU backends for every Arm level are selected at
+                // runtime; see app/src/main/cpp/CMakeLists.txt.
+                arguments += listOf(
+                    "-DGGML_NATIVE=OFF",
+                    "-DGGML_CPU_ALL_VARIANTS=ON",
+                    "-DGGML_BACKEND_DL=ON",
+                    "-DLLAMA_CURL=OFF",
+                    "-DLLAMA_BUILD_TOOLS=OFF",
+                    "-DLLAMA_BUILD_EXAMPLES=OFF",
+                    "-DLLAMA_BUILD_SERVER=OFF",
+                )
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
+
+    // The submission build declares NO internet permission: offline is
+    // architectural, not a mode. The dev flavor adds it for pack/model
+    // download tooling during development only.
+    flavorDimensions += "net"
+    productFlavors {
+        create("clean") {
+            dimension = "net"
+        }
+        create("dev") {
+            dimension = "net"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1+"
+        }
+    }
+
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "2.0.20"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+}
+
+dependencies {
+    val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
+    // ONNX Runtime Mobile for the cross-encoder reranker (build phase pins
+    // the exact version that resolves in CI).
+    implementation("com.microsoft.onnxruntime:onnxruntime-mobile:1.20.0")
+    // zstd decompression for pack chunk blobs.
+    implementation("com.github.luben:zstd-jni:1.5.6-4")
+}
