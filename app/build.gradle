@@ -1,5 +1,26 @@
-plugins {
-    id("com.android.application") version "8.5.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.20" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.20" apply false
+// Top-level build file. Uses buildscript block for reliable offline resolution
+// via the local Maven repository (Gradle proxy is unreliable in this env).
+
+buildscript {
+    repositories {
+        maven { url "file:///root/.m2/repository" }
+        maven { url "file:///home/hatch/workspace/local-maven" }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.5.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.20"
+        classpath "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.20"
+        classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.0.20"
+    }
+}
+
+allprojects {
+    repositories {
+        maven { url "file:///root/.m2/repository" }
+        maven { url "file:///home/hatch/workspace/local-maven" }
+        google()
+        mavenCentral()
+    }
 }
