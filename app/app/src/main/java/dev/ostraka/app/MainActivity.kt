@@ -1,5 +1,6 @@
 package dev.ostraka.app
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 
@@ -28,10 +30,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun OstrakaApp() {
+    val context = LocalContext.current
     var question by remember { mutableStateOf("") }
     var answer by remember { mutableStateOf("") }
     var metrics by remember { mutableStateOf("") }
     var running by remember { mutableStateOf(false) }
+    var activePipeline by remember { mutableStateOf<Pipeline?>(null) }
     val scope = rememberCoroutineScope()
 
     MaterialTheme {
@@ -63,18 +67,20 @@ fun OstrakaApp() {
                             answer = ""
                             metrics = ""
                             scope.launch {
+                                val pipeline = Pipeline(
+                                    packDir = context.getDir("packs", Context.MODE_PRIVATE),
+                                    modelFile = java.io.File(
+                                        context.getDir("models", Context.MODE_PRIVATE),
+                                        "model.gguf",
+                                    ),
+                                    rerankerDir = java.io.File(
+                                        context.getDir("models", Context.MODE_PRIVATE),
+                                        "reranker",
+                                    ),
+                                )
+                                // Keep the handle so Stop can interrupt it.
+                                activePipeline = pipeline
                                 try {
-                                    val pipeline = Pipeline(
-                                        packDir = getDir("packs", MODE_PRIVATE),
-                                        modelFile = java.io.File(
-                                            getDir("models", MODE_PRIVATE),
-                                            "model.gguf",
-                                        ),
-                                        rerankerDir = java.io.File(
-                                            getDir("models", MODE_PRIVATE),
-                                            "reranker",
-                                        ),
-                                    )
                                     val res = pipeline.ask(
                                         question,
                                         object : Pipeline.Progress {
@@ -97,6 +103,7 @@ fun OstrakaApp() {
                                 } catch (e: Exception) {
                                     answer = "Error: ${e.message}"
                                 } finally {
+                                    activePipeline = null
                                     running = false
                                 }
                             }
@@ -105,8 +112,12 @@ fun OstrakaApp() {
                     ) { Text("Ask") }
                     Spacer(Modifier.width(8.dp))
                     if (running) {
-                        // TODO: Engine.stop() on the live handle.
-                        OutlinedButton(onClick = { running = false }) { Text("Stop") }
+                        OutlinedButton(
+                            onClick = {
+                                activePipeline?.stop()
+                                running = false
+                            }
+                        ) { Text("Stop") }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
