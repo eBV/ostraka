@@ -54,7 +54,7 @@ Java_dev_ostraka_app_Engine_nativeInit(JNIEnv * env, jobject /*thiz*/, jstring j
     common_params params;
     params.model.path = path;
     params.n_ctx = 4096;
-    params.n_threads = cpu_count();
+    params.cpuparams.n_threads = cpu_count();
     // mmap stays ON: demand-paged experts are the whole point.
     params.use_mmap = true;
     params.use_mlock = false;
@@ -68,10 +68,10 @@ Java_dev_ostraka_app_Engine_nativeInit(JNIEnv * env, jobject /*thiz*/, jstring j
     }
 
     auto * e = new Engine();
-    e->model = init.model;
-    e->ctx = init.context;
+    e->model = init.model.release();
+    e->ctx = init.context.release();
     e->vocab = llama_model_get_vocab(e->model);
-    e->n_threads = params.n_threads;
+    e->n_threads = params.cpuparams.n_threads;
 
     e->sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
     llama_sampler_chain_add(e->sampler,
