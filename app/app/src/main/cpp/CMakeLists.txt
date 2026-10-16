@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(ostraka_jni)
 
-# llama.cpp lives at third_party/llama.cpp (git submodule, pinned in README).
-# We build it in-tree so the JNI bridge links the exact same sources.
-set(LLAMA_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/llama.cpp")
+# llama.cpp lives at third_party/llama.cpp relative to the app/ root.
+# From app/src/main/cpp, that's four levels up.
+set(LLAMA_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/llama.cpp")
 
 if(NOT EXISTS "${LLAMA_CPP_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
@@ -12,6 +12,8 @@ if(NOT EXISTS "${LLAMA_CPP_DIR}/CMakeLists.txt")
 endif()
 
 # Keep the JNI surface minimal: no tools, no server, no curl.
+# But we DO need the common utils library (for common_params, etc.).
+set(LLAMA_BUILD_COMMON ON CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_SERVER OFF CACHE BOOL "" FORCE)
